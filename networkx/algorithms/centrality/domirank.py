@@ -2,7 +2,10 @@
 
 import networkx as nx
 
+__all__ = ["domirank_centrality"]
 
+
+@nx._dispatch
 def domirank(G: nx.Graph, sigma: float, theta: float = 1) -> dict:
     """Returns the DomiRank centrality of each of the nodes in the graph.
 
@@ -47,16 +50,15 @@ def domirank(G: nx.Graph, sigma: float, theta: float = 1) -> dict:
     if N == 0:
         return {}
 
-    # use nodelist to get Adjacency matrix
-    nodelist = list(G)
-    A = nx.to_scipy_sparse_array(G, nodelist=nodelist, dtype=float)
+    # get Adjacency matrix
+    A = nx.adjacency_matrix(G).todense()
+
+    # compute λ_N - smallest eigenvalue of A
+    e = np.linalg.eigvals(A)
+    lambda_N = min(e)
 
     # Verify the given sigma value is viable
     try:
-        # compute λ_N - smallest eigenvalue of A
-        e = np.linalg.eigvals(A)
-        lambda_N = min(e)
-
         # check if sigma is between (0, -1/λ_N)
         assert sigma > 0
         assert sigma < -1 / lambda_N
@@ -64,13 +66,22 @@ def domirank(G: nx.Graph, sigma: float, theta: float = 1) -> dict:
     except Exception as e:
         print(f"Sigma is out of bounds. Needs to be between 0 and {-1 / lambda_N}")
 
+    # Verify that sigma * A + np.identity(N) is invertible
+    try:
+        assert np.linalg.det(sigma * A + np.identity(N)) != 0
+
+    except Exception as e:
+        print(
+            "One assumptions of DomiRank isn't met: The determinent of sigma * A + np.identity(N) is not invertible."
+        )
+
     # TODO: implement domirank centrality code
     # TODO: and convert output to dictionary with key: node, value: centrality
     dr = (
         theta
         * sigma
         * np.matmul(
-            np.linalg.inv(np.matmul(sigma, A) + np.identity(N)),
+            np.linalg.inv(sigma * A + np.identity(N)),
             np.multiply(A, np.ones((N, 1))),
         )
     )
