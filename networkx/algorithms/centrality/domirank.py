@@ -75,15 +75,17 @@ def domirank(G: nx.Graph, sigma: float, theta: float = 1) -> dict:
             "One assumptions of DomiRank isn't met: The determinent of sigma * A + np.identity(N) is not invertible."
         )
 
-    # TODO: implement domirank centrality code
-    # TODO: and convert output to dictionary with key: node, value: centrality
+    # DomiRank Centrality calculation
     dr = (
         theta
         * sigma
-        * np.matmul(
+        * np.dot(
             np.linalg.inv(sigma * A + np.identity(N)),
-            np.multiply(A, np.ones((N, 1))),
+            np.dot(A, np.ones((N, 1))),
         )
     )
 
-    return dr
+    # Converts output to dictionary with key: node, value: centrality
+    dr_dict = {i: dr[i][0] for i in range(len(dr))}
+
+    return dr_dict
