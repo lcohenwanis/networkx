@@ -2,7 +2,7 @@
 
 import networkx as nx
 
-__all__ = ["domirank_centrality"]
+__all__ = ["domirank"]
 
 
 @nx._dispatch
